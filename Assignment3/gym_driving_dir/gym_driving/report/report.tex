@@ -1,0 +1,162 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper, margin=1in]{geometry}
+% \usepackage[utf8]{inputenc}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+% \usepackage{hyperref}
+\usepackage{multicol}
+\usepackage{listings}
+% \usepackage{minted}
+% \usemintedstyle{emacs}
+
+% \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+% Single image
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale = 0.9 ]{ellipse.png}
+%     \caption{results/Q1/ellipse.png}
+% \end{figure}
+
+% Double images
+
+% \begin{figure}[H]
+    %     \centering
+    %     \begin{minipage}{0.49\textwidth}
+%     \includegraphics[width =\textwidth]{}
+%     \caption{}
+%     \end{minipage} \hfill
+%     \begin{minipage}{0.49\textwidth}    
+    %     \includegraphics[width = \textwidth]{}
+    %     \caption{}
+    %     \end{minipage}
+% \end{figure}
+% \usepackage{tikz}
+% \usetikzlibrary{automata, positioning, arrows}
+
+% \tikzset{
+    % ->, 
+    % >=latex, 
+    % node distance=3cm, .
+    % every state/.style={thick, fill=gray!10}, 
+    % initial text=$ $, 
+    % }
+    
+    % \usepackage{xcolor}
+    
+    % \definecolor{commentsColor}{rgb}{0.497495, 0.497587, 0.497464}
+    % \definecolor{keywordsColor}{rgb}{0.000000, 0.000000, 0.635294}
+    % \definecolor{stringColor}{rgb}{0.558215, 0.000000, 0.135316}
+    
+    % \setminted[Python]{
+%     % style=emacs,
+% }
+\title{CS747 Fundamentals of Learning Agents \\ Assignment 3}
+\author{Sanchit Jindal \quad 200020120}
+\date{}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+In this Assignment we create a self driving car, which starts on a random position on a map and need to reach the road,
+There are two levels of difficulty in the assignment, in the first part we don't have any mud pits on the plot and the car can go anywhere, in the second part there are 4 mud pits which need to be avoided while travelling
+
+\section{Part 1 (Q-learning with function Approximations)}
+This was my first Idea that I implemented for this question 
+\\The Main Algorithm for it is
+\begin{itemize}
+    \item Initialize the weights for each action for each of the features I want.
+    \item In each step Calculate the linear Combination of the features for each of the possible pair of actions.
+    \item Select the maximum Q value and return the corresponding action with a probability $\epsilon$ or a random action .
+    \item Get the reward and the next state from the environment.
+    \item For the new state calculate the maximum Q value.
+    \item Update the Weights (only for the action taken) as follows:-
+    \begin{align*}
+        W = W + \alpha * (R + newQ - oldQ) * \text{features}
+    \end{align*} 
+    \item This is the principal of gradient descent to get to the optimal value.
+    \item I also store the state transitions in a cache and after update choose some transitions to again use to update weights, This provides stability to the gradient descent and allow for faster learning.
+    \item I also tried various optimizations such as different biases for all the actions and reducing the value of $\epsilon$ and learning rate
+    \item I also tried to make some weights only accessible some time such as if the car is near to the right edge but only if the value of y is not in the region of exit
+    \item I also tried tried evaluating the code for different values of the hyperparameters
+\end{itemize}
+
+\noindent
+The Features used by me were
+\begin{itemize}
+    \item Distance of the car from the center of the road
+    \item The angle between the direction of the car and the direction of the exit with respect to the car
+    \item If the car goes near the edges other features become non zero, the distance from the edge and the angle the car is pointing away from it. 
+\end{itemize}
+
+I used the blog post Going Deeper Into Reinforcement Learning: Understanding Q-Learning and Linear Function Approximations
+The link is given in references.txt
+
+This Approach did not pan out as even though the car starts to move towards the exit and remain away from the edges due to stochasticity the car didn't reach the exit every time. So I have submitted a deterministic controller function.
+The Code is commented Out but still available in the run\_simulator.py file 
+
+\section{Part 1 (Deterministic Controller)}
+In the Deterministic Controller, I have set up rules that the car follows depending on its location and on the orientation
+\\ The Algorithm is 
+\begin{itemize}
+    \item If the Car is in the range such that the y value is $-10 \le y \le 10$ then it should just point towards the road and accelerate.
+    \item Otherwise if the car is not in this lane then it moves towards this lane along the y axis and then once in the lane it moves towards the exit.
+\end{itemize}
+
+\subsection{Evaluation}
+    Manually setting up the car position the maximum amount that is within the limits give a time steps of around \textbf{200}
+    \\ The Code Passes the given Testcases without any error
+    \\ I have also run the code on 100 random testcases which all successfully move to the exit.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale = 0.7 ]{part1.png}
+        \caption{Route without pits}
+    \end{figure}
+    
+    
+\section{Part 2 (Obstacles in the path)}
+
+In the Second Part of the Assignment the car should navigate around obstacles in its path to reach the exit.
+In this part also I have I have implemented a deterministic controller that will move the car depending on the current location and angle.
+I have exploited the facts that:-
+\begin{itemize}
+    \item There are only 4 pits in the map
+    \item There is always only one pit in each quadrant
+    \item The possible location of the pits leave safe space along the axis of the map and along the edges of the map
+\end{itemize}
+
+The Algorithm used by the controller to move the car is:-
+\begin{itemize}
+    \item If The Car is in any of the safe spaces left by the pits then the car will have a safe path to the exit and hence can easily move along the path without losing.
+    \item If the car is currently not in a safe spot, that is it is in one of the quadrants then, 
+    \item The algorithm checks along the 4 directions \textit{left, down, right, up} to check if the car has a path to an edge (safe space).
+    \item Because of the possible ways of how pits are placed in the map there always will be one direction that is empty.
+    \item The car moves in the direction that is free first checking the right so as to reduce the distance and checking left last
+    \item If in the direction the car falls into a safe space then we already know a path out of there
+\end{itemize}
+
+\subsection{Evaluation}
+The Code is able to navigate the map for the given testcases in the given amount of time,
+\\ I have also run the code for 100 random seeds, for all of them the car was successfully able to traverse to the exit,
+\\ The Outputs for the 100 cases is available in the file Part2.txt
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{part2.png}
+    \caption{Route with pits}
+\end{figure}
+
+\section{File Structure }
+The Files submitted are:-
+\begin{verbatim}
+    200020120
+    |------Part2.txt
+    |------report.pdf
+    |------run_simulator.py
+    |------references.txt
+\end{verbatim}
+
+
+\end{document}

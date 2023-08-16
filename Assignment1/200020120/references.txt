@@ -1,0 +1,7 @@
+I have referenced one of the algorithms Described in the paper to 
+implement the Many Armed Bandit Problem
+- https://repository.upenn.edu/cgi/viewcontent.cgi?article=1291&context=statistics_papers
+
+I have also refernced the slides provided to us by Sir on the 
+course webpage to implement the Task 1 Algorithms
+ 

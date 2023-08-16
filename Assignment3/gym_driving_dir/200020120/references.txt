@@ -1,0 +1,5 @@
+
+Sir's Slides
+
+Going Deeper Into Reinforcement Learning: Understanding Q-Learning and Linear Function Approximation:
+https://danieltakeshi.github.io/2016/10/31/going-deeper-into-reinforcement-learning-understanding-q-learning-and-linear-function-approximation/#:~:text=Q%2DLearning%20with%20(linear),Q%2DLearning%20work%20in%20practice.
